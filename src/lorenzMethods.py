@@ -11,7 +11,7 @@ class AttractorLorenz:
     Bla
     """
 
-    def __init__(self, s: float, r: float, b: float, step: float, num_steps: int, init_value):
+    def __init__(self, s, r, b, step, num_steps, init_value):
         self.s = s
         self.r = r
         self.b = b
@@ -25,6 +25,10 @@ class AttractorLorenz:
         self.z_dots = np.empty(self.num_steps + 1)
         self.x_dots[0], self.y_dots[0], self.z_dots[0] = self.init_value
 
+        self.f_x = np.empty(self.num_steps + 1)
+        self.f_y = np.empty(self.num_steps + 1)
+        self.f_z = np.empty(self.num_steps + 1)
+
     def getX(self):
         return self.x_dots
 
@@ -34,11 +38,15 @@ class AttractorLorenz:
     def getZ(self):
         return self.z_dots
 
-    def getT(self):
-        return np.arange(0, self.step * (self.num_steps + .1), self.step)
+    def clearDots(self):
+        self.x_dots = np.empty(self.num_steps + 1)
+        self.y_dots = np.empty(self.num_steps + 1)
+        self.z_dots = np.empty(self.num_steps + 1)
 
-    def getDots(self):
-        return np.vstack([self.getX(), self.getY(), self.getZ(), self.getT()])
+    def clearFunction(self):
+        self.f_x = np.empty(self.num_steps + 1)
+        self.f_y = np.empty(self.num_steps + 1)
+        self.f_z = np.empty(self.num_steps + 1)
 
     def diff(self, x, y, z):
         x_dot = self.s * (y - x)
@@ -62,6 +70,7 @@ class AttractorLorenz:
     def midpointMethod(self):
 
         for prev in range(self.num_steps):
+
             x_dot, y_dot, z_dot = self.diff(self.x_dots[prev], self.y_dots[prev], self.z_dots[prev])
             self.calcDots(x_dot, y_dot, z_dot, prev, self.step / 2)
 
@@ -69,35 +78,60 @@ class AttractorLorenz:
             self.calcDots(x_dot, y_dot, z_dot, prev, self.step)
 
     # # метод Рунге-Кутты 4 порядка
-    def RKMethod(self):
+    def RKMethod(self, steps):
         k_x = np.empty(4)
         k_y = np.empty(4)
         k_z = np.empty(4)
         coeff = [2, 2, 1]
         coeff2 = [0, 1, 1]
 
-        for prev in range(self.num_steps):
+        for prev in range(steps):
             for i in range(3):
-                k_x[i], k_y[i], k_z[i] = self.diff(self.x_dots[prev + coeff2[i]], self.y_dots[prev + coeff2[i]],
-                                                   self.z_dots[prev + coeff2[i]])
+                k_x[i], k_y[i], k_z[i] = self.diff(self.x_dots[prev + coeff2[i]], self.y_dots[prev + coeff2[i]], self.z_dots[prev + coeff2[i]])
                 self.calcDots(k_x[i], k_y[i], k_z[i], prev, self.step / coeff[i])
 
             k_x[3], k_y[3], k_z[3] = self.diff(self.x_dots[prev + 1], self.y_dots[prev + 1], self.z_dots[prev + 1])
-            self.x_dots[prev + 1] = self.x_dots[prev] + self.step * (
-                        1 / 6 * k_x[0] + 1 / 3 * k_x[1] + 1 / 3 * k_x[2] + 1 / 6 * k_x[3])
-            self.y_dots[prev + 1] = self.y_dots[prev] + self.step * (
-                        1 / 6 * k_y[0] + 1 / 3 * k_y[1] + 1 / 3 * k_y[2] + 1 / 6 * k_y[3])
-            self.z_dots[prev + 1] = self.z_dots[prev] + self.step * (
-                        1 / 6 * k_z[0] + 1 / 3 * k_z[1] + 1 / 3 * k_z[2] + 1 / 6 * k_z[3])
+            self.x_dots[prev + 1] = self.x_dots[prev] + self.step * (1/6 * k_x[0] + 1/3 * k_x[1] + 1/3 * k_x[2] + 1/6 * k_x[3])
+            self.y_dots[prev + 1] = self.y_dots[prev] + self.step * (1/6 * k_y[0] + 1/3 * k_y[1] + 1/3 * k_y[2] + 1/6 * k_y[3])
+            self.z_dots[prev + 1] = self.z_dots[prev] + self.step * (1/6 * k_z[0] + 1/3 * k_z[1] + 1/3 * k_z[2] + 1/6 * k_z[3])
 
-    def printDots(self, limit):
-        if limit > self.num_steps + 1:
-            limit = self.num_steps + 1
-        for i in range(limit):
-            print("Dots[" + str(i) + "]: x = " + str(self.x_dots[i]) + "; y = " + str(self.y_dots[i]) + "; z = " + str(
-                self.z_dots[i]))
+    def overclocking(self, k):
+        self.f_x[0], self.f_y[0], self.f_z[0] = self.diff(self.x_dots[0], self.y_dots[0], self.z_dots[0])
+        self.RKMethod(k)
 
-    def createPNG(self, path: str, do_show: bool = False, do_save=True):
+        for i in range(1, k+1):
+            self.f_x[i], self.f_y[i], self.f_z[i] = self.diff(self.x_dots[i], self.y_dots[i], self.z_dots[i])
+
+        for j in range(k, self.num_steps):
+            self.AdamBashfortsMethod(j)
+
+    def AdamBashfortsMethod(self, n):
+        coeff = [55/24, -59/24, 37/24, -3/8]
+
+        temp_x = coeff[0] * self.f_x[n] + coeff[1] * self.f_x[n-1] + coeff[2] * self.f_x[n-2] + coeff[3] * self.f_x[n-3]
+        self.x_dots[n + 1] = self.x_dots[n] + self.step * temp_x
+
+        temp_y = coeff[0] * self.f_y[n] + coeff[1] * self.f_y[n - 1] + coeff[2] * self.f_y[n - 2] + coeff[3] * self.f_y[n - 3]
+        self.y_dots[n + 1] = self.y_dots[n] + self.step * temp_y
+
+        temp_z = coeff[0] * self.f_z[n] + coeff[1] * self.f_z[n - 1] + coeff[2] * self.f_z[n - 2] + coeff[3] * self.f_z[n - 3]
+        self.z_dots[n + 1] = self.z_dots[n] + self.step * temp_z
+
+        self.f_x[n + 1], self.f_y[n + 1], self.f_z[n + 1] = self.diff(self.x_dots[n + 1], self.y_dots[n + 1], self.z_dots[n + 1])
+
+    def printDots(self, numb):
+        if numb > self.num_steps + 1:
+            numb = self.num_steps + 1
+        for i in range(numb):
+            print("Dots[" + str(i) + "]: x = " + str(self.x_dots[i]) + "; y = " + str(self.y_dots[i]) + "; z = " + str(self.z_dots[i]))
+
+    def printValFunc(self, numb):
+        if numb > self.num_steps + 1:
+            numb = self.num_steps + 1
+        for i in range(numb):
+            print("Value function[" + str(i) + "]: f(x) = " + str(self.f_x[i]) + "; f(y) = " + str(self.f_y[i]) + "; f(z) = " + str(self.f_z[i]))
+
+    def createPNG(self, name):
         fig = plt.figure()
         fig.set_facecolor("mintcream")
 
@@ -114,9 +148,8 @@ class AttractorLorenz:
         ax.tick_params(axis='y', colors="orange")
         ax.tick_params(axis='z', colors="orange")
 
-        if do_show: plt.show()
-
-        fig.savefig(path.rstrip(".png") + ".png")
+        plt.show()
+        fig.savefig(name + ".png")
 
     # def compare(self, other:src.lorenzMethods.AttractorLorenz, adapt_time_scale:bool = False):
     #
