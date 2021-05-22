@@ -3,13 +3,15 @@ import matplotlib.pyplot as plt
 import types
 import src
 
+
 class AttractorLorenz:
     """
     My class
 
     Bla
     """
-    def __init__(self, s:float, r:float, b:float, step:float, num_steps:int, init_value:types.Iterable[float]):
+
+    def __init__(self, s: float, r: float, b: float, step: float, num_steps: int, init_value):
         self.s = s
         self.r = r
         self.b = b
@@ -33,10 +35,10 @@ class AttractorLorenz:
         return self.z_dots
 
     def getT(self):
-        return np.arange(0,self.step*(self.num_steps+.1),self.step)
+        return np.arange(0, self.step * (self.num_steps + .1), self.step)
 
     def getDots(self):
-        return np.vstack([self.getX(),self.getY(),self.getZ(),self.getT()])
+        return np.vstack([self.getX(), self.getY(), self.getZ(), self.getT()])
 
     def diff(self, x, y, z):
         x_dot = self.s * (y - x)
@@ -60,7 +62,6 @@ class AttractorLorenz:
     def midpointMethod(self):
 
         for prev in range(self.num_steps):
-
             x_dot, y_dot, z_dot = self.diff(self.x_dots[prev], self.y_dots[prev], self.z_dots[prev])
             self.calcDots(x_dot, y_dot, z_dot, prev, self.step / 2)
 
@@ -77,21 +78,26 @@ class AttractorLorenz:
 
         for prev in range(self.num_steps):
             for i in range(3):
-                k_x[i], k_y[i], k_z[i] = self.diff(self.x_dots[prev + coeff2[i]], self.y_dots[prev + coeff2[i]], self.z_dots[prev + coeff2[i]])
+                k_x[i], k_y[i], k_z[i] = self.diff(self.x_dots[prev + coeff2[i]], self.y_dots[prev + coeff2[i]],
+                                                   self.z_dots[prev + coeff2[i]])
                 self.calcDots(k_x[i], k_y[i], k_z[i], prev, self.step / coeff[i])
 
             k_x[3], k_y[3], k_z[3] = self.diff(self.x_dots[prev + 1], self.y_dots[prev + 1], self.z_dots[prev + 1])
-            self.x_dots[prev + 1] = self.x_dots[prev] + self.step * (1/6 * k_x[0] + 1/3 * k_x[1] + 1/3 * k_x[2] + 1/6 * k_x[3])
-            self.y_dots[prev + 1] = self.y_dots[prev] + self.step * (1/6 * k_y[0] + 1/3 * k_y[1] + 1/3 * k_y[2] + 1/6 * k_y[3])
-            self.z_dots[prev + 1] = self.z_dots[prev] + self.step * (1/6 * k_z[0] + 1/3 * k_z[1] + 1/3 * k_z[2] + 1/6 * k_z[3])
+            self.x_dots[prev + 1] = self.x_dots[prev] + self.step * (
+                        1 / 6 * k_x[0] + 1 / 3 * k_x[1] + 1 / 3 * k_x[2] + 1 / 6 * k_x[3])
+            self.y_dots[prev + 1] = self.y_dots[prev] + self.step * (
+                        1 / 6 * k_y[0] + 1 / 3 * k_y[1] + 1 / 3 * k_y[2] + 1 / 6 * k_y[3])
+            self.z_dots[prev + 1] = self.z_dots[prev] + self.step * (
+                        1 / 6 * k_z[0] + 1 / 3 * k_z[1] + 1 / 3 * k_z[2] + 1 / 6 * k_z[3])
 
     def printDots(self, limit):
         if limit > self.num_steps + 1:
             limit = self.num_steps + 1
         for i in range(limit):
-            print("Dots[" + str(i) + "]: x = " + str(self.x_dots[i]) + "; y = " + str(self.y_dots[i]) + "; z = " + str(self.z_dots[i]))
+            print("Dots[" + str(i) + "]: x = " + str(self.x_dots[i]) + "; y = " + str(self.y_dots[i]) + "; z = " + str(
+                self.z_dots[i]))
 
-    def createPNG(self, path:str, do_show:bool = False, do_save = True):
+    def createPNG(self, path: str, do_show: bool = False, do_save=True):
         fig = plt.figure()
         fig.set_facecolor("mintcream")
 
@@ -112,7 +118,7 @@ class AttractorLorenz:
 
         fig.savefig(path.rstrip(".png") + ".png")
 
-    def compare(self, other:src.lorenzMethods.AttractorLorenz, adapt_time_scale:bool = False):
-
-        s_dots = self.getDots()
-        o_dots = other.
+    # def compare(self, other:src.lorenzMethods.AttractorLorenz, adapt_time_scale:bool = False):
+    #
+    #     s_dots = self.getDots()
+    #     o_dots = other.
