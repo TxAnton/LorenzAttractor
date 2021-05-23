@@ -282,7 +282,7 @@ class AttractorLorenz:
         self.x_dots = y[0]
         self.y_dots = y[1]
         self.z_dots = y[2]
-
+#DOPRI8
         # Старая реализация
 
     def gen_points_optimal(self, init_vals=(0., 1., 1.05), num_steps=10000, dt=0.01, s=10, r=28, b=2.667):
@@ -337,7 +337,7 @@ class AttractorLorenz:
             print("Value function[" + str(i) + "]: f(x) = " + str(self.f_x[i]) + "; f(y) = " + str(
                 self.f_y[i]) + "; f(z) = " + str(self.f_z[i]))
 
-    def createPNG(self, name):
+    def show(self):
         fig = plt.figure()
         fig.set_facecolor("mintcream")
 
@@ -356,7 +356,7 @@ class AttractorLorenz:
 
         plt.show()
 
-    def createPNG(self, name, do_show: bool = False):
+    def createPNG(self, name, do_show: bool = True):
         fig = plt.figure()
         fig.set_facecolor("mintcream")
 
