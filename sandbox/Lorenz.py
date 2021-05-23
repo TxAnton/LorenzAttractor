@@ -76,7 +76,8 @@ def gen_points_optimal(init_vals=(0., 1., 1.05), num_steps=10000, dt=0.01, s=10,
 
     dots = [xs, ys, zs, ts]
     return dots
-
+if __name__ =="__main__":
+    print("ho")
 
 # Plot
 
@@ -85,15 +86,15 @@ def gen_points_optimal(init_vals=(0., 1., 1.05), num_steps=10000, dt=0.01, s=10,
 # r=28
 # b=2.667
 
-# #I1 +
-# s=10
-# r=28
-# b=2*s
+#I1 +
+s=10
+r=28
+b=2*s
 
-# I2
-s = 10
-r = 0
-b = 1
+# # I2
+# s = 10
+# r = 0
+# b = 1
 
 # # I3
 # s = 1
@@ -110,13 +111,19 @@ b = 1
 # r=28
 # b=4
 
-xs, ys, zs, ts = gen_points_optimal(s=s, r=r, b=b)
+from src.lorenzMethods import AttractorLorenz
+
+AL1 = AttractorLorenz(s,r,b,0.01,10000,(10., 1., 1.05))
+AL1.EulerMethod()
+dots = AL1.getDots()
+(xs,ys,zs,ts) = (dots[0],dots[1],dots[2],dots[3])
+# xs, ys, zs, ts = gen_points_optimal(s=s, r=r, b=b)
 
 m = np.vstack([xs, ys, zs, ts])
 
-# I1 = (m[0]**2-2*s*m[2])*np.exp(2*s*m[3]) # req b==2s
+I1 = (m[0]**2-2*s*m[2])*np.exp(2*s*m[3]) # req b==2s
 #
-I2 = (m[1]**2 + m[2]**2 )*np.exp(2*m[3]) # req b=1, r=0
+# I2 = (m[1]**2 + m[2]**2 )*np.exp(2*m[3]) # req b=1, r=0
 #
 # I3 = (-r**2 * m[0]**2 + m[1]**2 + m[2]**2)**np.exp(2*m[3]) # req b = 1, s = 1
 
@@ -133,10 +140,10 @@ I2 = (m[1]**2 + m[2]**2 )*np.exp(2*m[3]) # req b=1, r=0
 mm = -1  # [i for i in range(len(I1)) if I1[i]==minf][0]
 
 # plt.plot(m[3][:mm],I3[:mm])
-plt.plot(I2[:mm])
-plt.show()
-print("WAIT")
-exit(0)
+# plt.plot(I1[:mm])
+# plt.show()
+# print("WAIT")
+# exit(0)
 fig = plt.figure()
 ax = fig.gca(projection='3d')
 
