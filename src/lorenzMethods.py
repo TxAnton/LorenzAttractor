@@ -4,15 +4,14 @@ import numpy as np
 from scipy.integrate import solve_ivp
 from scipy.interpolate import interp1d
 
+import time
 
 class AttractorLorenz:
     """
-    My class
-
-    Bla
+    Put docs here
     """
 
-    def __init__(self, s, r, b, step=0.01, num_steps=10000, init_value=(0., 1., 1.05)):
+    def __init__(self, s, r, b, step=0.01, num_steps=10000, init_value=(0., 1., 1.05), verbose = True):
         self.s = s
         self.r = r
         self.b = b
@@ -29,6 +28,10 @@ class AttractorLorenz:
         self.f_x = np.empty(self.num_steps + 1)
         self.f_y = np.empty(self.num_steps + 1)
         self.f_z = np.empty(self.num_steps + 1)
+
+        self.method = "None"  # String name of executed method
+
+        self.v = verbose
 
     def set_invariant_params(self, inv_num=1):
         self.inv_ready = inv_num
@@ -76,7 +79,10 @@ class AttractorLorenz:
             self.r=28
             self.b=4
 
-    def get_invariant_err(self, inv_num=1):
+    def get_invariant_err(self, inv_num=1, do_show = False, do_save = True):
+        if self.v:
+            print(f"Calculating error for inv {inv_num}, method: {self.method}")
+
         m = self.getDots()
         s = self.s
         r = self.r
@@ -124,7 +130,20 @@ class AttractorLorenz:
         I = np.vstack([I,self.getT()])
         err = np.vstack([err, self.getT()[:len(err)]])
 
-        return I[:len(I)], err
+        m = np.mean(np.abs(err[0][int(len(err[0])//2):]))
+
+        if do_show or do_save:
+            fig = plt.figure()
+            # plt.plot(err[1], err[0])
+            ax = fig.gca()
+            ax.plot(err[1], err[0])
+            ax.set_title(
+                f'Err inv {inv_num} for method: {self.method}. M:{m}')
+            name = f'inv_{inv_num}_{self.method}'
+            if do_show: plt.show()
+            if do_save: fig.savefig("img" + "/" + name.rstrip(".png") + ".png")
+
+        return I[:len(I)], err, m
 
     def getX(self):
         return self.x_dots
@@ -151,11 +170,11 @@ class AttractorLorenz:
         self.f_y = np.empty(self.num_steps + 1)
         self.f_z = np.empty(self.num_steps + 1)
 
-    def f(self, Y, t):  # System in standart form
-        d1 = self.s * (Y[1] - Y[0])
-        d2 = self.r * Y[0] - Y[1] - Y[0] * Y[2]
-        d3 = Y[0] * Y[1] - self.b * Y[2]
-        return np.vstack([d1, d2, d3])
+    # def f(self, Y, t):  # System in standart form
+    #     d1 = self.s * (Y[1] - Y[0])
+    #     d2 = self.r * Y[0] - Y[1] - Y[0] * Y[2]
+    #     d3 = Y[0] * Y[1] - self.b * Y[2]
+    #     return np.vstack([d1, d2, d3])
 
     # def diff(self, x, y, z):
     #     x_dot = self.s * (y - x)
@@ -172,8 +191,7 @@ class AttractorLorenz:
         d3 = Y[0] * Y[1] - b * Y[2]
         return [d1, d2, d3]
 
-    #
-    def diff(self, x, y, z):
+    def diff(self, x, y, z):  # System in custom form
         return self.__call__(None, np.array([x, y, z]))
 
     #     # return x_dot, y_dot, z_dot
@@ -183,17 +201,40 @@ class AttractorLorenz:
         self.y_dots[prev + 1] = self.y_dots[prev] + step * y_dot
         self.z_dots[prev + 1] = self.z_dots[prev] + step * z_dot
 
+    def progress_bar(self,cur,lim):
+        for vv in range(9, -1, -1):
+            if cur == int(lim * (float(vv) / 10.0)):
+                print(vv, end="")
+                if vv == 9: print()
+                break
+
+    #TODO =========METHODS=========
+
     # метод Эйлера - 1 порядок
     def EulerMethod(self):  # init other values from book!
+        self.method = "Euler"
+
+        if self.v:
+            print(f"Using method {self.method} with {self.num_steps} steps")
+
 
         for prev in range(self.num_steps):
+
+            if self.v: self.progress_bar(prev,self.num_steps)
+
             x_dot, y_dot, z_dot = self.diff(self.x_dots[prev], self.y_dots[prev], self.z_dots[prev])
             self.calcDots(x_dot, y_dot, z_dot, prev, self.step)
 
     # метод средней точки - 2 порядка
     def midpointMethod(self):
+        self.method = "Midpoint"
+
+        if self.v:
+            print(f"Using method {self.method} with {self.num_steps} steps")
 
         for prev in range(self.num_steps):
+
+            if self.v: self.progress_bar(prev, self.num_steps)
 
             x_dot, y_dot, z_dot = self.diff(self.x_dots[prev], self.y_dots[prev], self.z_dots[prev])
             self.calcDots(x_dot, y_dot, z_dot, prev, self.step / 2)
@@ -202,7 +243,16 @@ class AttractorLorenz:
             self.calcDots(x_dot, y_dot, z_dot, prev, self.step)
 
     # # метод Рунге-Кутты 4 порядка
-    def RKMethod(self, steps = None):
+    def RKMethod(self, steps=None):
+        isol = False
+        if self.method == "None":
+            isol=True
+            self.method = "RK4"
+            if self.v:
+                print(f"Using method {self.method} with {self.num_steps} steps")
+
+
+
         if steps == None: steps = self.num_steps
         k_x = np.empty(4)
         k_y = np.empty(4)
@@ -211,6 +261,9 @@ class AttractorLorenz:
         coeff2 = [0, 1, 1]
 
         for prev in range(steps):
+
+            if self.v and isol: self.progress_bar(prev, self.num_steps)
+
             for i in range(3):
                 k_x[i], k_y[i], k_z[i] = self.diff(self.x_dots[prev + coeff2[i]], self.y_dots[prev + coeff2[i]], self.z_dots[prev + coeff2[i]])
                 self.calcDots(k_x[i], k_y[i], k_z[i], prev, self.step / coeff[i])
@@ -224,37 +277,58 @@ class AttractorLorenz:
                     1 / 6 * k_z[0] + 1 / 3 * k_z[1] + 1 / 3 * k_z[2] + 1 / 6 * k_z[3])
 
     def overclocking(self, k, flag=False):
+
+        if flag:
+            self.method = "AdamMoulton"
+        else:
+            self.method = "AdamBashfort"
+
+        if self.v:
+            print(f"Using method {self.method} with {self.num_steps} steps")
+
         self.f_x[0], self.f_y[0], self.f_z[0] = self.diff(self.x_dots[0], self.y_dots[0], self.z_dots[0])
         self.RKMethod(k)
 
         for i in range(1, k + 1):
+            if self.v: self.progress_bar(i, self.num_steps)
             self.f_x[i], self.f_y[i], self.f_z[i] = self.diff(self.x_dots[i], self.y_dots[i], self.z_dots[i])
 
         for j in range(k, self.num_steps):
+            if self.v: self.progress_bar(j, self.num_steps)
+            # if self.v:
+            #     for vv in range(9,-1,-1):
+            #         if j == int(self.num_steps * (float(vv)/10.0)):
+            #             print(vv,end=" ")
+            #             if vv==9: print()
+
+            # if j % 100 == 0:
+            #     print(f'{j}/{self.num_steps}:{float(j)/self.num_steps}')
+
             self.AdamBashfortsMethod(j, flag)
 
     def AdamBashfortsMethod(self, n, flag=False):
         coeff = [55/24, -59/24, 37/24, -3/8]
 
-        temp_x = coeff[0] * self.f_x[n] + coeff[1] * self.f_x[n - 1] + coeff[2] * self.f_x[n - 2] + coeff[3] * self.f_x[
-            n - 3]
+
+        coeff = [55 / 24, -59 / 24, 37 / 24, -3 / 8]
+
+        temp_x = coeff[0] * self.f_x[n] + coeff[1] * self.f_x[n - 1] + coeff[2] * self.f_x[n - 2] + coeff[3] * self.f_x[n - 3]
         self.x_dots[n + 1] = self.x_dots[n] + self.step * temp_x
 
-        temp_y = coeff[0] * self.f_y[n] + coeff[1] * self.f_y[n - 1] + coeff[2] * self.f_y[n - 2] + coeff[3] * self.f_y[
-            n - 3]
+        temp_y = coeff[0] * self.f_y[n] + coeff[1] * self.f_y[n - 1] + coeff[2] * self.f_y[n - 2] + coeff[3] * self.f_y[n - 3]
         self.y_dots[n + 1] = self.y_dots[n] + self.step * temp_y
 
-        temp_z = coeff[0] * self.f_z[n] + coeff[1] * self.f_z[n - 1] + coeff[2] * self.f_z[n - 2] + coeff[3] * self.f_z[
-            n - 3]
+        temp_z = coeff[0] * self.f_z[n] + coeff[1] * self.f_z[n - 1] + coeff[2] * self.f_z[n - 2] + coeff[3] * self.f_z[n - 3]
         self.z_dots[n + 1] = self.z_dots[n] + self.step * temp_z
         # P
         self.f_x[n + 1], self.f_y[n + 1], self.f_z[n + 1] = self.diff(self.x_dots[n + 1], self.y_dots[n + 1], self.z_dots[n + 1])
         # PE
         if flag == True:
-            iter = 3
+            iter = 3 # ITERR
             self.AdamMoultonMethod(n, iter)
 
     def AdamMoultonMethod(self, n, iter):
+        self.method = "AdamMoulton"
         coeff = [251/720, 656/720, -264/720, 106/720, -19/720]
 
         for i in range(iter):
@@ -272,6 +346,11 @@ class AttractorLorenz:
             self.f_x[n + 1], self.f_y[n + 1], self.f_z[n + 1] = self.diff(self.x_dots[n + 1], self.y_dots[n + 1], self.z_dots[n + 1])
 
     def sp_ivp(self, method='DOP853'):  # решение встроенным методом
+        self.method = method
+
+        if self.v:
+            print(f"Using method {self.method} with {self.num_steps} steps")
+
         max_t = self.step * (self.num_steps + .5)
         sol_back = solve_ivp(fun=self,
                              t_span=[0, max_t],
@@ -282,10 +361,17 @@ class AttractorLorenz:
         self.x_dots = y[0]
         self.y_dots = y[1]
         self.z_dots = y[2]
+
+        if self.v: print("123456789")#self.progress_bar(prev, self.num_steps)
 #DOPRI8
         # Старая реализация
 
     def gen_points_optimal(self, init_vals=(0., 1., 1.05), num_steps=10000, dt=0.01, s=10, r=28, b=2.667):
+        self.method = "Midpoint (old)"
+
+        if self.v:
+            print(f"Using method {self.method} with {self.num_steps} steps")
+
         # Need one more for the initial values
         init_vals = self.init_value
         num_steps = self.num_steps
@@ -306,6 +392,7 @@ class AttractorLorenz:
         # Step through "time", calculating the partial derivatives at the current point
         # and using them to estimate the next point
         for i in range(num_steps):
+            if self.v: self.progress_bar(i, self.num_steps)
             lorenz(xs[i], ys[i], zs[i], s, r, b)
             x_dot, y_dot, z_dot = lorenz(xs[i], ys[i], zs[i], s, r, b)
             xs[i + 1] = xs[i] + (dt / 2) * (x_dot)  # x_1=x_0+h*f(x_0, y_0, z_0)
@@ -348,7 +435,7 @@ class AttractorLorenz:
         ax.set_xlabel("X Axis")
         ax.set_ylabel("Y Axis")
         ax.set_zlabel("Z Axis")
-        ax.set_title("Lorenz Attractor")
+        ax.set_title(self.method)
 
         ax.tick_params(axis='x', colors="orange")
         ax.tick_params(axis='y', colors="orange")
@@ -356,7 +443,9 @@ class AttractorLorenz:
 
         plt.show()
 
-    def createPNG(self, name, do_show: bool = True):
+    def createPNG(self, name= None, do_show: bool = False, prefix = 'img'):
+        if name == None:
+            name = self.method+"_"+str(time.time())
         fig = plt.figure()
         fig.set_facecolor("mintcream")
 
@@ -367,17 +456,21 @@ class AttractorLorenz:
         ax.set_xlabel("X Axis")
         ax.set_ylabel("Y Axis")
         ax.set_zlabel("Z Axis")
-        ax.set_title("Lorenz Attractor")
+        ax.set_title(self.method)
 
         ax.tick_params(axis='x', colors="orange")
         ax.tick_params(axis='y', colors="orange")
         ax.tick_params(axis='z', colors="orange")
 
         if do_show: plt.show()
-        fig.savefig(name.rstrip(".png") + ".png")
+        fig.savefig(prefix+"/"+name.rstrip(".png") + ".png")
 
     def compare(self, other, get_distance=True, adopt_time_scale: bool = False,
-                interp_type='linear'):  # Расстояние между двумя аттракторами
+                interp_type='linear', do_show=False, do_save = True):  # Расстояние между двумя аттракторами
+
+        if self.v:
+            print(f'Compare {self.method} vs {other.method}. Time scale:{"second" if adopt_time_scale else "first"}:{other.num_steps if adopt_time_scale else self.num_steps}')
+        name = f'comp_{self.method}_vs_{other.method}'
 
         s_dots = self.getDots()
         o_dots = other.getDots()
@@ -410,6 +503,38 @@ class AttractorLorenz:
         else:
             err = np.abs(s_dots[:3] - arr_interp.transpose())
         if (get_distance):
-            return np.vstack([np.sqrt(err[0] ** 2 + err[1] ** 2 + err[2] ** 2), t])
+            err = np.vstack([np.sqrt(err[0] ** 2 + err[1] ** 2 + err[2] ** 2), t])
+            m = np.mean(err[0])
+            if do_show or do_save:
+                fig = plt.figure()
+                # plt.plot(err[1], err[0])
+                ax = fig.gca()
+                ax.plot(err[1], err[0])
+                ax.set_title(
+                    f'Compare {self.method} vs {other.method}. TS:{int(adopt_time_scale)}. M:{m.round(4)}')
+                if do_show: plt.show()
+                if do_save: fig.savefig("img" + "/" + name.rstrip(".png") + ".png")
+
         else:
-            return np.vstack([err, t])
+            err = np.vstack([err, t])
+            if do_show or do_save:
+                fig = plt.figure()
+                fig.set_facecolor("mintcream")
+
+                ax = fig.gca(projection='3d')
+                ax.plot(err[0], err[1], err[2], lw=0.5)
+
+                ax.set_facecolor('mintcream')
+                ax.set_xlabel("X Axis")
+                ax.set_ylabel("Y Axis")
+                ax.set_zlabel("Z Axis")
+                ax.set_title(f'Compare {self.method} vs {other.method}. Time scale:{"second" if adopt_time_scale else "first"}')
+
+                ax.tick_params(axis='x', colors="orange")
+                ax.tick_params(axis='y', colors="orange")
+                ax.tick_params(axis='z', colors="orange")
+
+                if do_show: plt.show()
+                if do_save: fig.savefig("img"+"/"+name.rstrip(".png") + ".png")
+
+        return err, m
