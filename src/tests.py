@@ -24,9 +24,18 @@ if __name__ =="__main__":
 
     # Adam Bashforts
     AL4 = AttractorLorenz(10, 28, 2.667, 0.01, 10000, (0., 1., 1.05))
-    AL4.overclocking(3)
+    AL4.overclocking(3, False)
     AL4.printDots(15)
     AL4.printValFunc(15)
     AL4.createPNG("PNG/AL4")
     AL4.clearDots()
     AL4.clearFunction()
+
+    # Adam Moulton
+    AL5 = AttractorLorenz(10, 28, 2.667, 0.01, 10000, (0., 1., 1.05))
+    AL5.overclocking(3, True)
+    AL5.printDots(15)
+    AL5.printValFunc(15)
+    AL5.createPNG("PNG/AL5")
+    AL5.clearDots()
+    AL5.clearFunction()

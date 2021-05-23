@@ -95,7 +95,7 @@ class AttractorLorenz:
             self.y_dots[prev + 1] = self.y_dots[prev] + self.step * (1/6 * k_y[0] + 1/3 * k_y[1] + 1/3 * k_y[2] + 1/6 * k_y[3])
             self.z_dots[prev + 1] = self.z_dots[prev] + self.step * (1/6 * k_z[0] + 1/3 * k_z[1] + 1/3 * k_z[2] + 1/6 * k_z[3])
 
-    def overclocking(self, k):
+    def overclocking(self, k, flag):
         self.f_x[0], self.f_y[0], self.f_z[0] = self.diff(self.x_dots[0], self.y_dots[0], self.z_dots[0])
         self.RKMethod(k)
 
@@ -103,9 +103,9 @@ class AttractorLorenz:
             self.f_x[i], self.f_y[i], self.f_z[i] = self.diff(self.x_dots[i], self.y_dots[i], self.z_dots[i])
 
         for j in range(k, self.num_steps):
-            self.AdamBashfortsMethod(j)
+            self.AdamBashfortsMethod(j, flag)
 
-    def AdamBashfortsMethod(self, n):
+    def AdamBashfortsMethod(self, n, flag):
         coeff = [55/24, -59/24, 37/24, -3/8]
 
         temp_x = coeff[0] * self.f_x[n] + coeff[1] * self.f_x[n-1] + coeff[2] * self.f_x[n-2] + coeff[3] * self.f_x[n-3]
@@ -116,8 +116,29 @@ class AttractorLorenz:
 
         temp_z = coeff[0] * self.f_z[n] + coeff[1] * self.f_z[n - 1] + coeff[2] * self.f_z[n - 2] + coeff[3] * self.f_z[n - 3]
         self.z_dots[n + 1] = self.z_dots[n] + self.step * temp_z
-
+        # P
         self.f_x[n + 1], self.f_y[n + 1], self.f_z[n + 1] = self.diff(self.x_dots[n + 1], self.y_dots[n + 1], self.z_dots[n + 1])
+        # PE
+        if flag == True:
+            iter = 3
+            self.AdamMoultonMethod(n, iter)
+
+    def AdamMoultonMethod(self, n, iter):
+        coeff = [251/720, 656/720, -264/720, 106/720, -19/720]
+
+        for i in range(iter):
+            # PEC # PECEC #PECECEC
+            temp_x = coeff[0] * self.f_x[n + 1] + coeff[1] * self.f_x[n] + coeff[2] * self.f_x[n - 1] + coeff[3] * self.f_x[n - 2] + coeff[4] * self.f_x[n - 3]
+            self.x_dots[n + 1] = self.x_dots[n] + self.step * temp_x
+
+            temp_y = coeff[0] * self.f_y[n + 1] + coeff[1] * self.f_y[n] + coeff[2] * self.f_y[n - 1] + coeff[3] * self.f_y[n - 2] + coeff[4] * self.f_y[n - 3]
+            self.y_dots[n + 1] = self.y_dots[n] + self.step * temp_y
+
+            temp_z = coeff[0] * self.f_z[n + 1] + coeff[1] * self.f_z[n] + coeff[2] * self.f_z[n - 1] + coeff[3] * self.f_z[n - 2] + coeff[4] * self.f_z[n - 3]
+            self.z_dots[n + 1] = self.z_dots[n] + self.step * temp_z
+
+            # PECE #PECECE #PECECECE
+            self.f_x[n + 1], self.f_y[n + 1], self.f_z[n + 1] = self.diff(self.x_dots[n + 1], self.y_dots[n + 1], self.z_dots[n + 1])
 
     def printDots(self, numb):
         if numb > self.num_steps + 1:
