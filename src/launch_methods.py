@@ -1,0 +1,40 @@
+from attractor import Attractor
+
+if __name__ == "__main__":
+    # Euler
+    AL1 = Attractor()
+    AL1.iterator_method("EUL1")
+    AL1.show("img/Euler", "Euler method", False, True)
+    print("Вызовов EUL1 f: ", AL1.get_counter())
+
+    # Midpoint
+    AL2 = Attractor()
+    AL2.iterator_method("MIDP2")
+    AL2.show("img/Midpoint", "Midpoint method", False, True)
+    print("Вызовов MIDP2 f: ", AL2.get_counter())
+
+    # RK4
+    AL3 = Attractor()
+    AL3.iterator_method("RK4")
+    AL3.show("img/RK4", "RK4 method", False, True)
+    print("Вызовов RK4 f: ", AL3.get_counter())
+
+    # Adams Bashforts
+    AL4 = Attractor()
+    AL4.iterator_method("AB4")
+    AL4.show("img/Adams_Bashforts_", "Adams Bashforts method", False, True)
+    print("Вызовов AB4 f: ", AL4.get_counter())
+
+    # Adams Mowlton
+    AL5 = Attractor()
+    AL5.iterator_method("AM4")
+    AL5.show("img/Adams_Mowlton", "Adams Mowlton method (+ RK4)", False, True)
+    print("Вызовов AM4 f: ", AL5.get_counter())
+
+    # Adams Mowlton 5
+    AL6 = Attractor()
+    AL6.iterator_method("ABM5")
+    AL6.show("img/Adams_Bashforts_Mowlton", "Adams Mowlton 5 method (+ RK4, + Bashforts)", False, True)
+    print("Вызовов ABM5 f: ", AL6.get_counter())
+
+
