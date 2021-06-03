@@ -4,8 +4,8 @@ import numpy as np
 if __name__ == "__main__":
     show = False
 
-    t = 50
-    step = 0.001
+    t = 5
+    step = 0.0001
     print("steps:", t // step)
     arg = {"s": 10.0, "r": 28.0, "b": 2.667, "step": step, "num_steps": int(t // step), "init_value": (0., 1., 1.05)}
 

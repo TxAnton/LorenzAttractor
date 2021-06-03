@@ -16,7 +16,7 @@ if __name__ == "__main__":
 
     a_ethalon = AttractorLorenz(**eth_arg)
     # a_ethalon.sp_ivp()
-    a_ethalon.overclocking(3, False) # TODO SET ETHALON HERE
+    a_ethalon.sp_ivp() # TODO SET ETHALON HERE
     # a_ethalon.createPNG(do_show=False)
 
     # Euler
