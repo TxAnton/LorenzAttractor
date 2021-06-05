@@ -16,23 +16,23 @@ def progress_bar(cur, lim):
             break
 
 
-def compare(s_dots, o_dots, adopt_time_scale: bool = False, interp_type='linear'):  # Расстояние между двумя аттракторами
+def compare(s_points, o_points, adopt_time_scale: bool = False, interp_type='linear'):  # Расстояние между двумя аттракторами
     get_distance = True
 
-    min_t = min(s_dots[3][-1], o_dots[3][-1])  # Минимальное время конца
-    max_t = max(s_dots[3][0], o_dots[3][0]) # Максимальное вермя начала
+    min_t = min(s_points[3][-1], o_points[3][-1])  # Минимальное время конца
+    max_t = max(s_points[3][0], o_points[3][0]) # Максимальное вермя начала
     assert (max_t < min_t)
     if adopt_time_scale:
-        t = o_dots[3]
+        t = o_points[3]
     else:
-        t = s_dots[3]
+        t = s_points[3]
     i = 0
 
     # build interpolated function for function out of time scale
     if adopt_time_scale:
-        f_interp = [interp1d(s_dots[3], s_dots[i], kind=interp_type) for i in range(3)]
+        f_interp = [interp1d(s_points[3], s_points[i], kind=interp_type) for i in range(3)]
     else:
-        f_interp = [interp1d(o_dots[3], o_dots[i], kind=interp_type) for i in range(3)]
+        f_interp = [interp1d(o_points[3], o_points[i], kind=interp_type) for i in range(3)]
 
     err = [[], [], []]  # x,y,z
     arr_interp = np.empty((len(t), 3))
@@ -50,11 +50,11 @@ def compare(s_dots, o_dots, adopt_time_scale: bool = False, interp_type='linear'
         else: i_s += 1
     arr_interp = arr_interp.transpose()
     if adopt_time_scale:
-        dts = o_dots[:3,i_s:i_f]
+        dts = o_points[:3,i_s:i_f]
 
         # err = np.abs(o_dots[:3,i_s:i_f] - arr_interp.transpose())
     else:
-        dts = s_dots[:3, i_s:i_f]
+        dts = s_points[:3, i_s:i_f]
         # m_dim = min(dts.shape[1], arr_interp.shape[1])
         # err = np.abs(dts[:, :m_dim] - arr_interp[:, :m_dim])
         # err = np.abs(s_dots[:3,i_s:i_f] - arr_interp.transpose())
@@ -87,16 +87,16 @@ class Attractor:
         self.num_steps = num_steps
         self.init_value = init_value
 
-        self.dots = [np.empty(self.num_steps + 1), np.empty(self.num_steps + 1), np.empty(self.num_steps + 1)]
-        self.dots[0][0], self.dots[1][0], self.dots[2][0] = self.init_value
+        self.points = [np.empty(self.num_steps + 1), np.empty(self.num_steps + 1), np.empty(self.num_steps + 1)]
+        self.points[0][0], self.points[1][0], self.points[2][0] = self.init_value
 
         self.func = [np.empty(self.num_steps + 1), np.empty(self.num_steps + 1), np.empty(self.num_steps + 1)]
 
     # наверное нужно убрать лишние? (1)
     # set get
 
-    def getDots(self):
-        return np.vstack([self.dots, np.arange(0,self.step*(self.num_steps+.5),self.step)])
+    def getPoints(self):
+        return np.vstack([self.points, np.arange(0, self.step * (self.num_steps + .5), self.step)])
 
     def getT(self):
         return np.arange(0,self.step*(self.num_steps+.5),self.step)
@@ -149,7 +149,7 @@ class Attractor:
             self.b = 4
 
     def get_invariant_err(self, inv_num=1, dt=None):
-        m = self.getDots()
+        m = self.getPoints()
         s = self.s
         r = self.r
         b = self.b
@@ -219,42 +219,42 @@ class Attractor:
     def iterator(self, steps, method):
         for i in range(steps):
             # progress_bar(i,steps)
-            cur_dots = [self.dots[0][i], self.dots[1][i], self.dots[2][i]]
-            self.dots[0][i + 1], self.dots[1][i + 1], self.dots[2][i + 1] = method(self.step, cur_dots, self.f)
+            cur_points = [self.points[0][i], self.points[1][i], self.points[2][i]]
+            self.points[0][i + 1], self.points[1][i + 1], self.points[2][i + 1] = method(self.step, cur_points, self.f)
 
     def _iterator_method(self, method):  # исправить 1
         iterations = 3
-        all_dots = []
-        all_dots.append([self.dots[0][0], self.dots[1][0], self.dots[2][0]])
+        all_points = []
+        all_points.append([self.points[0][0], self.points[1][0], self.points[2][0]])
 
         self.iterator(3, methods.RK4)
         for i in range(3):
-            all_dots.append([self.dots[0][i + 1], self.dots[1][i + 1], self.dots[2][i + 1]])
+            all_points.append([self.points[0][i + 1], self.points[1][i + 1], self.points[2][i + 1]])
 
         if method == "AB4" or method == "ABM5":
             for j in range(3, self.num_steps):
-                progress_bar(j,self.num_steps)
-                self.dots[0][j + 1], self.dots[1][j + 1], self.dots[2][j + 1] = methods.AB4(self.step, all_dots, self.f)
+                progress_bar(j, self.num_steps)
+                self.points[0][j + 1], self.points[1][j + 1], self.points[2][j + 1] = methods.AB4(self.step,  all_points, self.f)
 
-                all_dots.pop(0)  # 0 1 2 3 - 1 2 3 4 - 2 3 4 5
-                all_dots.append([self.dots[0][j + 1], self.dots[1][j + 1], self.dots[2][j + 1]])
+                all_points.pop(0)  # 0 1 2 3 - 1 2 3 4 - 2 3 4 5
+                all_points.append([self.points[0][j + 1], self.points[1][j + 1], self.points[2][j + 1]])
 
                 if method == "ABM5":
-                    all_dots.insert(0, [self.dots[0][j - 3], self.dots[1][j - 3], self.dots[2][j - 3]])
-                    self.dots[0][j + 1], self.dots[1][j + 1], self.dots[2][j + 1] = methods.ABM5(self.step,
-                                                                                                 all_dots, self.f,
-                                                                                                 iterations)
+                    all_points.insert(0, [self.points[0][j - 3], self.points[1][j - 3], self.points[2][j - 3]])
+                    self.points[0][j + 1], self.points[1][j + 1], self.points[2][j + 1] = methods.ABM5(self.step,
+                                                                                                       all_points, self.f,
+                                                                                                       iterations)
 
-                    all_dots[4] = self.dots[0][j + 1], self.dots[1][j + 1], self.dots[2][j + 1]
-                    all_dots.pop(0)
+                    all_points[4] = self.points[0][j + 1], self.points[1][j + 1], self.points[2][j + 1]
+                    all_points.pop(0)
 
         elif method == "AM4":
             for j in range(3, self.num_steps + 1):
                 progress_bar(j, self.num_steps)
-                self.dots[0][j], self.dots[1][j], self.dots[2][j] = methods.AM4(self.step, all_dots, self.f, iterations)
-                all_dots[3] = self.dots[0][j], self.dots[1][j], self.dots[2][j]
-                all_dots.pop(0)
-                all_dots.append(methods.RK4(self.step, [self.dots[0][j], self.dots[1][j], self.dots[2][j]], self.f))
+                self.points[0][j], self.points[1][j], self.points[2][j] = methods.AM4(self.step, all_points, self.f, iterations)
+                all_points[3] = self.points[0][j], self.points[1][j], self.points[2][j]
+                all_points.pop(0)
+                all_points.append(methods.RK4(self.step, [self.points[0][j], self.points[1][j], self.points[2][j]], self.f))
 
     def show(self, name, str, do_show: bool = False, is_color=False):
         fig = plt.figure()
@@ -267,7 +267,7 @@ class Attractor:
         else:
             color = "black"
 
-        ax.plot(self.dots[0], self.dots[1], self.dots[2], lw=0.5, color=color)
+        ax.plot(self.points[0], self.points[1], self.points[2], lw=0.5, color=color)
 
         ax.set_facecolor('mintcream')
         ax.set_xlabel("X")
@@ -284,4 +284,4 @@ class Attractor:
 
     def animation(self, method, is_color):
         self.iterator_method(method)
-        anim.launch(np.array(list([self.getDots()[0], self.getDots()[1], self.getDots()[2]])), is_color)
+        anim.launch(np.array(list([self.getPoints()[0], self.getPoints()[1], self.getPoints()[2]])), is_color)

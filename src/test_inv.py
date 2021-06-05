@@ -7,9 +7,9 @@ import time
 import json
 import copy
 
-def lse(dots):
-    x = dots[1]
-    y = dots[0]
+def lse(points):
+    x = points[1]
+    y = points[0]
     A = np.vstack([x, np.ones(len(x))]).T
     m, c = np.linalg.lstsq(A, y, rcond=None)[0]
     return m,c
