@@ -66,7 +66,7 @@ def compare(s_points, o_points, adopt_time_scale: bool = False, interp_type='lin
 class Attractor:
     methods = ["EUL1", "MIDP2", "RK4", "AB4", "AM4", "ABM5"]
 
-    def compare(self): # TODO remove
+    def compare(self):  # TODO remove
         pass
 
     """
@@ -87,20 +87,25 @@ class Attractor:
         self.num_steps = num_steps
         self.init_value = init_value
 
-        self.points = [np.empty(self.num_steps + 1), np.empty(self.num_steps + 1), np.empty(self.num_steps + 1)]
+        self.points = [np.empty(self.num_steps + 1), np.empty(self.num_steps + 1),
+                       np.empty(self.num_steps + 1),  np.empty(self.num_steps + 1)]
         self.points[0][0], self.points[1][0], self.points[2][0] = self.init_value
 
         self.func = [np.empty(self.num_steps + 1), np.empty(self.num_steps + 1), np.empty(self.num_steps + 1)]
 
-    # наверное нужно убрать лишние? (1)
-    # set get
+    # CallBack для сохранения точек, если пол-ль тоже хочет сохранять все точки, реализует свой
+    def savePoint(self, coord, time, index):
+        self.points[0][index] = coord[0]  # x
+        self.points[1][index] = coord[1]  # y
+        self.points[2][index] = coord[2]  # z
+        self.points[3][index] = time      # time = index * step
 
     def getPoints(self):
-        return np.vstack([self.points, np.arange(0, self.step * (self.num_steps + .5), self.step)])
+        # return np.vstack([self.points, np.arange(0, self.step * (self.num_steps + .5), self.step)])
+        return self.points
 
     def getT(self):
         return np.arange(0,self.step*(self.num_steps+.5),self.step)
-
 
     def set_invariant_params(self, inv_num=1):
         self.inv_ready = inv_num
@@ -206,55 +211,31 @@ class Attractor:
         self.set_counter()
         return np.vstack([d1, d2, d3])
 
-    def iterator_method(self, method: str):
+    def call_method(self, method: str):
         if method == "EUL1":
-            self.iterator(self.num_steps, methods.EUL1)
+            self.call(methods.EUL1, False)
+
         elif method == "MIDP2":
-            self.iterator(self.num_steps, methods.MIDP2)
+            self.call(methods.MIDP2, False)
+
         elif method == "RK4":
-            self.iterator(self.num_steps, methods.RK4)
-        else:
-            self._iterator_method(method)
+            self.call(methods.RK4, False)
 
-    def iterator(self, steps, method):
-        for i in range(steps):
-            # progress_bar(i,steps)
-            cur_points = [self.points[0][i], self.points[1][i], self.points[2][i]]
-            self.points[0][i + 1], self.points[1][i + 1], self.points[2][i + 1] = method(self.step, cur_points, self.f)
-
-    def _iterator_method(self, method):  # исправить 1
-        iterations = 3
-        all_points = []
-        all_points.append([self.points[0][0], self.points[1][0], self.points[2][0]])
-
-        self.iterator(3, methods.RK4)
-        for i in range(3):
-            all_points.append([self.points[0][i + 1], self.points[1][i + 1], self.points[2][i + 1]])
-
-        if method == "AB4" or method == "ABM5":
-            for j in range(3, self.num_steps):
-                progress_bar(j, self.num_steps)
-                self.points[0][j + 1], self.points[1][j + 1], self.points[2][j + 1] = methods.AB4(self.step,  all_points, self.f)
-
-                all_points.pop(0)  # 0 1 2 3 - 1 2 3 4 - 2 3 4 5
-                all_points.append([self.points[0][j + 1], self.points[1][j + 1], self.points[2][j + 1]])
-
-                if method == "ABM5":
-                    all_points.insert(0, [self.points[0][j - 3], self.points[1][j - 3], self.points[2][j - 3]])
-                    self.points[0][j + 1], self.points[1][j + 1], self.points[2][j + 1] = methods.ABM5(self.step,
-                                                                                                       all_points, self.f,
-                                                                                                       iterations)
-
-                    all_points[4] = self.points[0][j + 1], self.points[1][j + 1], self.points[2][j + 1]
-                    all_points.pop(0)
+        elif method == "AB4":
+            self.call(methods.AB4, False)
 
         elif method == "AM4":
-            for j in range(3, self.num_steps + 1):
-                progress_bar(j, self.num_steps)
-                self.points[0][j], self.points[1][j], self.points[2][j] = methods.AM4(self.step, all_points, self.f, iterations)
-                all_points[3] = self.points[0][j], self.points[1][j], self.points[2][j]
-                all_points.pop(0)
-                all_points.append(methods.RK4(self.step, [self.points[0][j], self.points[1][j], self.points[2][j]], self.f))
+            self.call(methods.AM4, True)
+
+        elif method == "ABM5":
+            self.call(methods.ABM5, True)
+
+    def call(self, method, flag):
+        point = [self.points[0][0], self.points[1][0], self.points[2][0]]
+        if flag:
+            method(self.step, self.num_steps, point, self.f, 2, self.savePoint)
+        else:
+            method(self.step, self.num_steps, point, self.f, self.savePoint)
 
     def show(self, name, str, do_show: bool = False, is_color=False):
         fig = plt.figure()
@@ -283,5 +264,5 @@ class Attractor:
         fig.savefig(name)
 
     def animation(self, method, is_color):
-        self.iterator_method(method)
+        self.call_method(method)
         anim.launch(np.array(list([self.getPoints()[0], self.getPoints()[1], self.getPoints()[2]])), is_color)
