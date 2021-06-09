@@ -3,9 +3,17 @@ import numpy as np
 
 # здесь методы, которыми могут пользоваться другие люди
 
+def progress_bar(cur, lim):
+    for vv in range(9, -1, -1):
+        if cur == int(lim * (float(vv) / 10.0)):
+            print(vv, end="")
+            if vv == 9: print()
+            break
+
 # метод Эйлера - 1 порядка
 def EUL1(step, num_steps, point, func, savePoint=None):
     for i in range(num_steps):
+        progress_bar(i, num_steps)
         value_func = func(point)
 
         for j in range(len(point)):
@@ -21,6 +29,7 @@ def MIDP2(step, num_steps, point, func, savePoint=None):
     temp_point = np.empty(len(point))
 
     for i in range(num_steps):
+        progress_bar(i, num_steps)
         value_func = func(point)
 
         for j in range(len(point)):
@@ -41,6 +50,8 @@ def RK4(step, num_steps, point, func, savePoint=None):
     k = np.zeros([4, len(point)])
 
     for i in range(num_steps):
+        if num_steps > 10:
+            progress_bar(i, num_steps)
         k[0] = np.hstack(func(np.asarray(point)))
         k[1] = np.hstack(func(np.asarray(point) + step * (1 / 2) * k[0]))
         k[2] = np.hstack(func(np.asarray(point) + step * (1 / 2) * k[1]))
@@ -67,6 +78,7 @@ def AB4(step, num_steps, point, func, savePoint=None, ABM5=False):
             savePoint(new_point, step * (i + 1), i + 1)
 
     for j in range(index, num_steps):
+        progress_bar(j, num_steps)
         temp = const_val[0] * np.hstack(func(points[index])) + const_val[1] * np.hstack(func(points[index - 1])) + \
            const_val[2] * np.hstack(func(points[index - 2])) + const_val[3] * np.hstack(func(points[index - 3]))
         points.append(np.array(points[index]) + step * temp)
@@ -104,6 +116,7 @@ def AM4(step, num_steps, point, func, iterations, savePoint=None):
             savePoint(new_point, step * (i + 1), i + 1)
 
     for j in range(index, num_steps + 1):
+        progress_bar(j - index, num_steps - index)
         for i in range(iterations):  # EC
             temp = const_val[0] * np.hstack(func(points[index])) + const_val[1] * np.hstack(func(points[index - 1])) + \
                    const_val[2] * np.hstack(func(points[index - 2])) + const_val[3] * np.hstack(func(points[index - 3]))

@@ -87,8 +87,8 @@ class Attractor:
         self.num_steps = num_steps
         self.init_value = init_value
 
-        self.points = [np.empty(self.num_steps + 1), np.empty(self.num_steps + 1),
-                       np.empty(self.num_steps + 1),  np.empty(self.num_steps + 1)]
+        self.points = np.vstack([np.empty(self.num_steps + 1), np.empty(self.num_steps + 1),
+                                 np.empty(self.num_steps + 1), np.empty(self.num_steps + 1)])
         self.points[0][0], self.points[1][0], self.points[2][0] = self.init_value
 
         self.func = [np.empty(self.num_steps + 1), np.empty(self.num_steps + 1), np.empty(self.num_steps + 1)]

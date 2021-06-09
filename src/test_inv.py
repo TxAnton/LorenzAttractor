@@ -77,77 +77,80 @@ def lse(points):
 #             except:
 #                 pass
 #
+if __name__ == "__main__":
+    methods = Attractor.methods
 
-methods = Attractor.methods
+    res = {}
 
-res = {}
+    log_scale = True
 
+    for method in methods:
+        for inv in range(1, 6):
+            # calcs.append((method,inv))
+            # res_h.append([])
+            #
+            # continue
+            print("=============================")
+            print(f'{method}@{inv}')
 
+            AL1 = Attractor(step=0.0001, num_steps=10000)  # TODO Шаг выставляется тут!
+            AL1.set_invariant_params(inv)
+            AL1.call_method(method)
+            calls = AL1.get_counter()
+            print("calls_f: ", calls)
+            # Get inv func
+            I, err = AL1.get_invariant_err(inv)
+            # Cut thirds
+            l = int(I.shape[1] * (1.0 / 3.0))
+            I = I[:, l:-l]
+            err = err[:, l:-l]
+            txt = f'{method}@{inv}#{calls}'
 
-for method in methods:
-    for inv in range(1,6):
-        # calcs.append((method,inv))
-        # res_h.append([])
-        #
-        # continue
-        print("=============================")
-        print(f'{method}@{inv}')
+            # fig.savefig
+            M = np.mean(I[0])
+            D = np.std(I[0] - M)
+            K, C = lse(I)
 
-        AL1 = Attractor(step=0.0001, num_steps=100) # TODO Шаг выставляется тут!
-        AL1.set_invariant_params(inv)
-        AL1.iterator_method(method)
-        calls = AL1.get_counter()
-        print("calls_f: ", calls)
-        # Get inv func
-        I, err = AL1.get_invariant_err(inv)
-        # Cut thirds
-        l = int(I.shape[1] * (1.0 / 3.0))
-        I = I[:, l:-l]
-        err = err[:, l:-l]
-        txt = f'{method}@{inv}#{calls}'
+            res[str((method, inv))] = [M, D, K, C]
 
-        # fig.savefig
-        M = np.mean(I[0])
-        D = np.std(I[0] - M)
-        K, C = lse(I)
+            fig = plt.figure()
+            fig.set_facecolor("mintcream")
 
-        res[str((method,inv))]=[M,D,K,C]
+            ax = fig.gca()
 
-        fig = plt.figure()
-        fig.set_facecolor("mintcream")
+            ax.plot(I[1], I[0], lw=0.5)
 
-        ax = fig.gca()
-        ax.plot(I[1], I[0], lw=0.5)
+            ax.set_facecolor('mintcream')
+            ax.set_xlabel("X Axis")
+            ax.set_ylabel("Y Axis")
+            ax.set_title(f'{method}@{inv}')
 
-        ax.set_facecolor('mintcream')
-        ax.set_xlabel("X Axis")
-        ax.set_ylabel("Y Axis")
-        ax.set_title(f'{method}@{inv}')
+            ax.tick_params(axis='x', colors="orange")
+            ax.tick_params(axis='y', colors="orange")
+            rg = [np.min(I[0]), np.max(I[0])]
+            # rg = [C + K * I[1][0], C + K * I[1][-1]]
+            # rg = [-1, 1]
+            # plt.ylim([C + K * I[1][0],C + K * I[1][-1]])
+            if (False and np.abs(np.abs(rg[0])) < float('inf') and np.abs(rg[1]) < float('inf')):
+                plt.ylim(*rg)
+            fig.savefig(f'img/{txt}:{M}:{D}:{K}:{C}.png')
 
-        ax.tick_params(axis='x', colors="orange")
-        ax.tick_params(axis='y', colors="orange")
+            # plt.plot(I[1], I[0])
+            # plt.savefig(f'img/{txt}:{M}:{D}:{K}:{C}.png')  # (f'img/{method}@{inv}.png')
 
-        fig.savefig(f'img/{txt}:{M}:{D}:{K}:{C}.png')
+            print("M =", M)
+            print("D =", D)
+            print("K =", K)
+            print("C =", C)
+            print(res)
+            print()
+    # N_TH = 8
+    #
+    # for i in range(N_TH):
+    #     Thread(target=calc_th,
+    #            args=(copy.copy(calcs),i, N_TH)).start()
 
-        # plt.plot(I[1], I[0])
-        # plt.savefig(f'img/{txt}:{M}:{D}:{K}:{C}.png')  # (f'img/{method}@{inv}.png')
-
-        print("M =", M)
-        print("D =", D)
-        print("K =", K)
-        print("C =", C)
-        print(res)
-        print()
-# N_TH = 8
-#
-# for i in range(N_TH):
-#     Thread(target=calc_th,
-#            args=(copy.copy(calcs),i, N_TH)).start()
-
-# print(res_h)
-with open("res.json", "w") as fp:
-    json.dump(res,fp)
-print(res)
-
-
-
+    # print(res_h)
+    with open("res.json", "w") as fp:
+        json.dump(res, fp)
+    print(res)
