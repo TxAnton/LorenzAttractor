@@ -74,7 +74,7 @@ def AB4(step, num_steps, point, func, savePoint=None, ABM5=False):
         if ABM5:
             const_val = [251 / 720, 646 / 720, -264 / 720, 106 / 720, -19 / 720]
 
-            for i in range(2):
+            for i in range(4):
                 temp = const_val[0] * np.hstack(func(points[index + 1])) + const_val[1] * np.hstack(
                     func(points[index])) + \
                        const_val[2] * np.hstack(func(points[index - 1])) + const_val[3] * np.hstack(

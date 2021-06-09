@@ -228,7 +228,7 @@ class Attractor:
             point = [self.points[0][0], self.points[1][0], self.points[2][0]]
 
             if method == "AM4":
-                methods.AM4(self.step, self.num_steps, point, self.f, 2, self.savePoint)
+                methods.AM4(self.step, self.num_steps, point, self.f, 4, self.savePoint)
 
             elif method == "ABM5":
                 methods.AB4(self.step, self.num_steps, point, self.f, self.savePoint, True)
