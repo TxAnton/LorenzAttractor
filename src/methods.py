@@ -53,7 +53,7 @@ def RK4(step, num_steps, point, func, savePoint=None):
     return point
 
 # Adam Bashforts k = 4
-def AB4(step, num_steps, point, func, savePoint=None):
+def AB4(step, num_steps, point, func, savePoint=None, ABM5=False):
     const_val = [55 / 24, -59 / 24, 37 / 24, -3 / 8]
     points = []
     index = 3
@@ -69,12 +69,23 @@ def AB4(step, num_steps, point, func, savePoint=None):
     for j in range(index, num_steps):
         temp = const_val[0] * np.hstack(func(points[index])) + const_val[1] * np.hstack(func(points[index - 1])) + \
            const_val[2] * np.hstack(func(points[index - 2])) + const_val[3] * np.hstack(func(points[index - 3]))
-        new_point = np.array(points[index]) + step * temp
+        points.append(np.array(points[index]) + step * temp)
+
+        if ABM5:
+            const_val = [251 / 720, 646 / 720, -264 / 720, 106 / 720, -19 / 720]
+
+            for i in range(2):
+                temp = const_val[0] * np.hstack(func(points[index + 1])) + const_val[1] * np.hstack(
+                    func(points[index])) + \
+                       const_val[2] * np.hstack(func(points[index - 1])) + const_val[3] * np.hstack(
+                    func(points[index - 2])) + \
+                       const_val[4] * np.hstack(func(points[index - 3]))
+                points[index + 1] = np.array(points[index]) + step * temp
+
+        if savePoint is not None:
+            savePoint(points[index + 1], step * (j + 1), j + 1)
 
         points.pop(0)
-        points.append(new_point)
-        if savePoint is not None:
-            savePoint(new_point, step * (j + 1), j + 1)
 
     return points[index]
 
@@ -103,32 +114,3 @@ def AM4(step, num_steps, point, func, iterations, savePoint=None):
         points.pop(0)
         points.append(RK4(step, 1, points[index - 1], func, None))
     return points[index]
-
-def ABM5(step, num_steps, point, func, iterations, savePoint=None):  # 0 1 2 3 4
-    const_val = [251 / 720, 646 / 720, -264 / 720, 106 / 720, -19 / 720]
-    points = []
-    index = 4
-
-    points.append(point)  # всегда хранятся только 5 точек
-
-    for i in range(index - 1):  # разгон
-        new_point = RK4(step, 1, points[i], func, None)
-        points.append(new_point)
-        if savePoint is not None:  # сохраняем здесь, иначе сбиваются индексы
-            savePoint(new_point, step * (i + 1), i + 1)
-
-    for j in range(index - 1, num_steps):
-        points.append(AB4(step, 1, points[0], func, None))  # вычисляем 5 точку методом Башфорта
-
-        for i in range(iterations):
-            temp = const_val[0] * np.hstack(func(points[index])) + const_val[1] * np.hstack(func(points[index - 1])) + \
-                   const_val[2] * np.hstack(func(points[index - 2])) + const_val[3] * np.hstack(
-                func(points[index - 3])) + \
-                   const_val[4] * np.hstack(func(points[index - 4]))
-            points[index] = np.array(points[index - 1]) + step * temp
-
-        if savePoint is not None:
-            savePoint(points[index], step * (j + 1), j + 1)
-        points.pop(0)
-
-    return points[index - 1]

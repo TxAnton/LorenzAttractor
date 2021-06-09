@@ -35,6 +35,5 @@ if __name__ == "__main__":
     AL6 = Attractor()
     AL6.call_method("ABM5")
     AL6.show("img/Adams_Bashforts_Moulton", "Adams-Bashfort-Moulton", False, True)
-    # AL6.animation("ABM5", True)
     print("Вызовов ABM5 f: ", AL6.get_counter())
 

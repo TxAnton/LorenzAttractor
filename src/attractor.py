@@ -213,29 +213,30 @@ class Attractor:
 
     def call_method(self, method: str):
         if method == "EUL1":
-            self.call(methods.EUL1, False)
+            self.call(methods.EUL1)
 
         elif method == "MIDP2":
-            self.call(methods.MIDP2, False)
+            self.call(methods.MIDP2)
 
         elif method == "RK4":
-            self.call(methods.RK4, False)
+            self.call(methods.RK4)
 
         elif method == "AB4":
-            self.call(methods.AB4, False)
+            self.call(methods.AB4)
 
-        elif method == "AM4":
-            self.call(methods.AM4, True)
-
-        elif method == "ABM5":
-            self.call(methods.ABM5, True)
-
-    def call(self, method, flag):
-        point = [self.points[0][0], self.points[1][0], self.points[2][0]]
-        if flag:
-            method(self.step, self.num_steps, point, self.f, 2, self.savePoint)
         else:
-            method(self.step, self.num_steps, point, self.f, self.savePoint)
+            point = [self.points[0][0], self.points[1][0], self.points[2][0]]
+
+            if method == "AM4":
+                methods.AM4(self.step, self.num_steps, point, self.f, 2, self.savePoint)
+
+            elif method == "ABM5":
+                methods.AB4(self.step, self.num_steps, point, self.f, self.savePoint, True)
+
+
+    def call(self, method):
+        point = [self.points[0][0], self.points[1][0], self.points[2][0]]
+        method(self.step, self.num_steps, point, self.f, self.savePoint)
 
     def show(self, name, str, do_show: bool = False, is_color=False):
         fig = plt.figure()
