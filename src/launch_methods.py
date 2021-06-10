@@ -25,15 +25,9 @@ if __name__ == "__main__":
     AL4.show("img/Adams_Bashforts_", "Adams Bashfort method", False, True)
     print("Вызовов AB4 f: ", AL4.get_counter())
 
-    # Adams Moulton
-    AL5 = Attractor()
-    AL5.call_method("AM4")
-    AL5.show("img/Adams_Moulton", "Adams Moulton method", False, True)
-    print("Вызовов AM4 f: ", AL5.get_counter())
-
     # Adams Moulton 5
-    AL6 = Attractor()
-    AL6.call_method("ABM5")
-    AL6.show("img/Adams_Bashforts_Moulton", "Adams-Bashfort-Moulton", False, True)
-    print("Вызовов ABM5 f: ", AL6.get_counter())
+    AL5 = Attractor()
+    AL5.call_method("ABM5")
+    AL5.show("img/Adams_Bashforts_Moulton", "Adams-Bashfort-Moulton", False, True)
+    print("Вызовов ABM5 f: ", AL5.get_counter())
 

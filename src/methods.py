@@ -100,30 +100,3 @@ def AB4(step, num_steps, point, func, savePoint=None, ABM5=False):
         points.pop(0)
 
     return points[index]
-
-
-# Adam Moulton 4
-def AM4(step, num_steps, point, func, iterations, savePoint=None):
-    const_val = [3 / 8, 19 / 24, -5 / 24, 1 / 24]
-    points = []
-    index = 3
-
-    points.append(point)  # всегда хранятся только 4 точки
-    for i in range(index):  # разгон
-        new_point = RK4(step, 1, points[i], func, None)
-        points.append(new_point)
-        if savePoint is not None:  # сохраняем здесь, иначе сбиваются индексы
-            savePoint(new_point, step * (i + 1), i + 1)
-
-    for j in range(index, num_steps + 1):
-        progress_bar(j - index, num_steps - index)
-        for i in range(iterations):  # EC
-            temp = const_val[0] * np.hstack(func(points[index])) + const_val[1] * np.hstack(func(points[index - 1])) + \
-                   const_val[2] * np.hstack(func(points[index - 2])) + const_val[3] * np.hstack(func(points[index - 3]))
-            points[index] = np.array(points[index - 1]) + step * temp
-
-        if savePoint is not None:  # сохраняем здесь, иначе сбиваются индексы
-            savePoint(points[index], step * j, j)
-        points.pop(0)
-        points.append(RK4(step, 1, points[index - 1], func, None))
-    return points[index]
